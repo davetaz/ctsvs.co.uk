@@ -1,27 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSV DataTable with Edit, Copy, and Create Row</title>
     <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="//cdn.datatables.net/2.1.6/css/dataTables.dataTables.min.css">
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+    <script src="//cdn.datatables.net/2.1.6/js/dataTables.min.js"></script>
     <!-- jQuery UI for modal -->
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
     <style>
+        body {
+            max-width: 1280px;
+        }
         /* Modal Styles */
         #editModal {
             display: none;
             padding: 20px;
             background: #f9f9f9;
-            border: 1px solid #ccc;
-            border-radius: 10px;
+            border-radius: 0px;
             box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.5);
         }
         .ui-dialog-titlebar-close {
@@ -32,7 +35,8 @@
             margin-top: 10px;
             width: 20%;
         }
-        .modal-content input {
+        .modal-content input,
+        .modal-content select {
             width: 60%;
             padding: 5px;
             margin-top: 5px;
@@ -43,7 +47,7 @@
             display: inline-block;
             margin-right: 5%;
         }
-        #saveEdit, #createNewRow {
+        #saveEdit, #createNewRow, #clearStorageBtn {
             margin-top: 20px;
             padding: 10px 20px;
             background-color: #007bff;
@@ -98,6 +102,8 @@
             <select id="editType">
                 <option value="BP">BP</option>
                 <option value="BR">BR</option>
+                <option value="JC">JC</option>
+                <option value="JD">JD</option>
             </select><br>
 
             <label for="editAcc">Acc:</label>
@@ -141,11 +147,13 @@
             <input type="text" id="editTotal"><br>
 
             <button id="saveEdit">Save</button>
+            <button id="cancelButton">Cancel</button>
         </div>
     </div>
 
     <h2>Copied Data</h2>
     <button id="createNewRow">Create New Row</button>
+    <button id="clearStorageBtn">Clear Table</button>
     <button id="exportBtn">Export to CSV</button>
     <table id="copiedTable" class="display" style="width:100%">
         <thead>
@@ -167,8 +175,17 @@
         </tbody>
     </table>
 
+    <div class="totals-section">
+        <h3>Totals by Type</h3>
+        <p><strong>BP Total:</strong> <span id="totalBP">0.00</span></p>
+        <p><strong>BR Total:</strong> <span id="totalBR">0.00</span></p>
+        <p><strong>JC Total:</strong> <span id="totalJC">0.00</span></p>
+        <p><strong>JD Total:</strong> <span id="totalJD">0.00</span></p>
+    </div>
+
     <script>
         $(document).ready(function() {
+            const STORAGE_KEY = 'ctsvs_overheads';
             const csvTable = $('#csvTable').DataTable({
                 "order": [[ 4, "desc" ]], // order by Date column (index 4)
                 "columnDefs": [{
@@ -186,6 +203,11 @@
                 }]
             });
 
+            // Helper to clean value by removing quotes and trimming whitespace
+            function cleanValue(value) {
+                return value.replace(/^"|"$/g, '').trim();
+            }
+
             function processDate(dateStr) {
                 const parts = dateStr.split("/");
                 return `${parts[2]}-${parts[1]}-${parts[0]}`; // Convert to yyyy-mm-dd
@@ -196,14 +218,83 @@
                 return `${parts[2]}/${parts[1]}/${parts[0]}`; // Convert back to dd/mm/yyyy
             }
 
+            // Function to save the copied table data to localStorage
+            function saveToStorage() {
+                const data = copiedTable.rows().data().toArray();
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            }
+
+            // Function to load the copied table data from localStorage
+            function loadFromStorage() {
+                const storedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                if (storedData) {
+                    copiedTable.clear();
+                    storedData.forEach(row => copiedTable.row.add(row).draw(false));
+                    updateTotals();
+                }
+            }
+
+            // Function to clear localStorage and the copied table
+            function clearStorage() {
+                localStorage.removeItem(STORAGE_KEY);
+                copiedTable.clear().draw();
+                updateTotals();
+            }
+
+            function updateTotals() {
+                let totalBP = 0;
+                let totalBR = 0;
+                let totalJC = 0;
+                let totalJD = 0;
+
+                copiedTable.rows().data().toArray().forEach(row => {
+                    const type = row[0];
+                    const amount = parseFloat(row[7]) || 0;
+                    const vat = parseFloat(row[9]) || 0;
+                    const total = amount + vat;
+
+                    switch (type) {
+                        case 'BP':
+                            totalBP += total;
+                            break;
+                        case 'BR':
+                            totalBR += total;
+                            break;
+                        case 'JC':
+                            totalJC += total;
+                            break;
+                        case 'JD':
+                            totalJD += total;
+                            break;
+                    }
+                });
+
+                // Update the total amounts in the UI
+                $('#totalBP').text(totalBP.toFixed(2));
+                $('#totalBR').text(totalBR.toFixed(2));
+                $('#totalJC').text(totalJC.toFixed(2));
+                $('#totalJD').text(totalJD.toFixed(2));
+            }
+
             function processData(data) {
-                const lines = data.split("\n").slice(1); // Skip the header line
+                const lines = data.split("\n").filter(line => line.trim() !== ""); // Remove empty lines
                 lines.forEach(line => {
-                    const row = line.split(",");
-                    if (row.length > 1) {
-                        row[4] = processDate(row[4]); // Format the date
-                        while (row.length < 10) row.push('');
-                        csvTable.row.add([...row, null]).draw(false); // Add null for the button column
+                    let row = line.split(",").map(col => cleanValue(col)); // Clean each column
+
+                    if (row[1] === '1215') { // Filter rows where column 2 (Acc) is '1215'
+                        const filteredRow = [
+                            row[0],     // Type
+                            row[1],     // Acc
+                            row[2],     // NC
+                            row[3],     // Num
+                            processDate(row[4]), // Date
+                            row[5],     // Category
+                            row[6],     // Desc
+                            row[7],     // Amount
+                            row[8],     // Code
+                            row[9]      // VAT
+                        ];
+                        csvTable.row.add([...filteredRow, null]).draw(false); // Add row with actions column
                     }
                 });
             }
@@ -242,12 +333,20 @@
 
             $('#copiedTable tbody').on('click', 'button.delete-btn', function () {
                 copiedTable.row($(this).parents('tr')).remove().draw();
+                updateTotals(); // Update totals after deletion
+                saveToStorage(); // Save table data to localStorage
             });
 
             $('#createNewRow').on('click', function() {
                 isCreatingNewRow = true;
                 openEditModal([]); // Open the modal with empty data for a new row
             });
+
+            $('#clearStorageBtn').on('click', function() {
+            if (confirm("Are you sure you want to clear the table and delete the data?")) {
+                clearStorage(); // Clear storage and empty the table
+            }
+        });
 
             function openEditModal(data) {
                 if (isCreatingNewRow) {
@@ -298,12 +397,6 @@
                                 $(this).dialog("close");
                             }
                         });
-                    },
-                    buttons: {
-                        "Cancel": function() {
-                            $(this).dialog("close");
-                            isCreatingNewRow = false;
-                        }
                     }
                 });
             }
@@ -358,16 +451,22 @@
                 }
 
                 $('#editModal').dialog("close");
+                updateTotals(); // Update totals after saving
+                saveToStorage(); // Save table data to localStorage
             }
 
             $('#saveEdit').on('click', function() {
                 saveEditData();
             });
+            $('#cancelButton').on('click', function() {
+                $('#editModal').dialog("close");
+                isCreatingNewRow = false;
+            });
 
             $('#exportBtn').on('click', function() {
                 const data = copiedTable.rows().data().toArray();
                 const csv = [];
-                csv.push("Type,Acc,NC,Num,Date,Category,Desc,Amount,Code,VAT"); // Header
+                //csv.push("Type,Acc,NC,Num,Date,Category,Desc,Amount,Code,VAT"); // Header
 
                 data.forEach(row => {
                     // Create a clone of the row to avoid modifying the original data
@@ -391,6 +490,8 @@
                 a.click();
                 document.body.removeChild(a);
             });
+
+            loadFromStorage();
         });
     </script>
 
