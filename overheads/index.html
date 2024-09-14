@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV DataTable with Edit, Copy, and Create Row</title>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+    <!-- jQuery UI for modal -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <style>
+        /* Modal Styles */
+        #editModal {
+            display: none;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.5);
+        }
+        .ui-dialog-titlebar-close {
+            display: none;
+        }
+        .modal-content label {
+            display: inline-block;
+            margin-top: 10px;
+            width: 20%;
+        }
+        .modal-content input {
+            width: 60%;
+            padding: 5px;
+            margin-top: 5px;
+            display: inline-block;
+        }
+        .date-input {
+            width: 30%;
+            display: inline-block;
+            margin-right: 5%;
+        }
+        #saveEdit, #createNewRow {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .action-buttons button {
+            margin-right: 5px;
+        }
+        #exportBtn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>CSV DataTable with Edit, Copy, and Create Row</h1>
+
+    <input type="file" id="csvFileInput" accept=".csv" />
+    <table id="csvTable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Acc</th>
+                <th>NC</th>
+                <th>Num</th>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Desc</th>
+                <th>Amount</th>
+                <th>Code</th>
+                <th>VAT</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <!-- Modal for Editing/Creating -->
+    <div id="editModal" title="Edit/Create Row">
+        <div class="modal-content">
+            <label for="editType">Type:</label>
+            <select id="editType">
+                <option value="BP">BP</option>
+                <option value="BR">BR</option>
+            </select><br>
+
+            <label for="editAcc">Acc:</label>
+            <input type="text" id="editAcc"><br>
+
+            <label for="editNC">NC:</label>
+            <input type="text" id="editNC"><br>
+
+            <label for="editNum">Num:</label>
+            <input type="text" id="editNum"><br>
+
+            <label for="editDay">Day:</label>
+            <input type="text" id="editDay" class="date-input"><br>
+
+            <label for="editMonth">Month:</label>
+            <input type="text" id="editMonth" class="date-input"><br>
+
+            <label for="editYear">Year:</label>
+            <input type="text" id="editYear" class="date-input"><br>
+
+            <label for="editCategory">Category:</label>
+            <input type="text" id="editCategory"><br>
+
+            <label for="editDesc">Desc:</label>
+            <input type="text" id="editDesc"><br>
+
+            <label for="editAmount">Amount:</label>
+            <input type="text" id="editAmount" disabled><br> <!-- Disabled -->
+
+            <label for="editCode">Code:</label>
+            <select id="editCode">
+                <option value="T1">T1</option>
+                <option value="T5">T5</option>
+                <option value="T9">T9</option>
+            </select><br>
+
+            <label for="editVAT">VAT:</label>
+            <input type="text" id="editVAT" disabled><br> <!-- Disabled -->
+
+            <label for="editTotal">Total:</label>
+            <input type="text" id="editTotal"><br>
+
+            <button id="saveEdit">Save</button>
+        </div>
+    </div>
+
+    <h2>Copied Data</h2>
+    <button id="createNewRow">Create New Row</button>
+    <button id="exportBtn">Export to CSV</button>
+    <table id="copiedTable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Acc</th>
+                <th>NC</th>
+                <th>Num</th>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Desc</th>
+                <th>Amount</th>
+                <th>Code</th>
+                <th>VAT</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        $(document).ready(function() {
+            const csvTable = $('#csvTable').DataTable({
+                "order": [[ 4, "desc" ]], // order by Date column (index 4)
+                "columnDefs": [{
+                    "targets": -1,
+                    "data": null,
+                    "defaultContent": "<button class='copy-btn'>Copy</button>"
+                }]
+            });
+
+            const copiedTable = $('#copiedTable').DataTable({
+                "columnDefs": [{
+                    "targets": -1,
+                    "data": null,
+                    "defaultContent": "<div class='action-buttons'><button class='edit-btn'>Edit</button><button class='delete-btn'>Delete</button></div>"
+                }]
+            });
+
+            function processDate(dateStr) {
+                const parts = dateStr.split("/");
+                return `${parts[2]}-${parts[1]}-${parts[0]}`; // Convert to yyyy-mm-dd
+            }
+
+            function revertDate(dateStr) {
+                const parts = dateStr.split("-");
+                return `${parts[2]}/${parts[1]}/${parts[0]}`; // Convert back to dd/mm/yyyy
+            }
+
+            function processData(data) {
+                const lines = data.split("\n").slice(1); // Skip the header line
+                lines.forEach(line => {
+                    const row = line.split(",");
+                    if (row.length > 1) {
+                        row[4] = processDate(row[4]); // Format the date
+                        while (row.length < 10) row.push('');
+                        csvTable.row.add([...row, null]).draw(false); // Add null for the button column
+                    }
+                });
+            }
+
+            function readCSV(input) {
+                const file = input.files[0];
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    processData(text);
+                };
+
+                reader.readAsText(file);
+            }
+
+            $('#csvFileInput').on('change', function() {
+                readCSV(this);
+            });
+
+            let selectedRowData;
+            let editingRowIndex;
+            let isCreatingNewRow = false;
+
+            $('#csvTable tbody').on('click', 'button.copy-btn', function () {
+                selectedRowData = csvTable.row($(this).parents('tr')).data();
+                editingRowIndex = null; // Indicate that we are copying, not editing
+                openEditModal(selectedRowData);
+            });
+
+            $('#copiedTable tbody').on('click', 'button.edit-btn', function () {
+                selectedRowData = copiedTable.row($(this).parents('tr')).data();
+                editingRowIndex = copiedTable.row($(this).parents('tr')).index(); // Store the index of the row being edited
+                openEditModal(selectedRowData);
+            });
+
+            $('#copiedTable tbody').on('click', 'button.delete-btn', function () {
+                copiedTable.row($(this).parents('tr')).remove().draw();
+            });
+
+            $('#createNewRow').on('click', function() {
+                isCreatingNewRow = true;
+                openEditModal([]); // Open the modal with empty data for a new row
+            });
+
+            function openEditModal(data) {
+                if (isCreatingNewRow) {
+                    $('#editType').val('BR');
+                    $('#editAcc').val('1215');
+                    $('#editNC').val('');
+                    $('#editNum').val('');
+                    $('#editDay').val('');
+                    $('#editMonth').val('');
+                    $('#editYear').val('');
+                    $('#editCategory').val('');
+                    $('#editDesc').val('');
+                    $('#editAmount').val('');
+                    $('#editCode').val('');
+                    $('#editVAT').val('');
+                    $('#editTotal').val('');
+                } else {
+                    const dateParts = data[4] ? data[4].split('-') : ['', '', ''];
+
+                    $('#editType').val(data[0]);
+                    $('#editAcc').val(data[1]);
+                    $('#editNC').val(data[2]);
+                    $('#editNum').val(data[3]);
+                    $('#editDay').val(dateParts[2]); // Day
+                    $('#editMonth').val(dateParts[1]); // Month
+                    $('#editYear').val(dateParts[0]); // Year
+                    $('#editCategory').val(data[5]);
+                    $('#editDesc').val(data[6]);
+                    $('#editAmount').val(data[7]);
+                    $('#editCode').val(data[8]);
+                    $('#editVAT').val(data[9]);
+                    $('#editTotal').val((parseFloat(data[7]) + parseFloat(data[9])).toFixed(2));
+                }
+
+                $('#editModal').dialog({
+                    modal: true,
+                    width: 400,
+                    closeOnEscape: true,
+                    open: function() {
+                        $('#editDay').focus(); // Focus on the Day input
+                        $(this).off('keypress').on('keypress', function(e) {
+                            if (e.key === "Escape") {
+                                $(this).dialog("close");
+                                isCreatingNewRow = false;
+                            }
+                            if (e.key === "Enter") {
+                                saveEditData();
+                                $(this).dialog("close");
+                            }
+                        });
+                    },
+                    buttons: {
+                        "Cancel": function() {
+                            $(this).dialog("close");
+                            isCreatingNewRow = false;
+                        }
+                    }
+                });
+            }
+
+            function saveEditData() {
+                const day = $('#editDay').val().padStart(2, '0');
+                const month = $('#editMonth').val().padStart(2, '0');
+                const year = $('#editYear').val();
+                const formattedDate = `${year}-${month}-${day}`;
+
+                const total = parseFloat($('#editTotal').val());
+                const code = $('#editCode').val();
+                let amount, vat;
+
+                if (code === 'T9') {
+                    amount = total;
+                    vat = 0;
+                } else if (code === 'T1') {
+                    amount = total / 1.2;
+                    vat = total - amount;
+                } else if (code === 'T5') {
+                    amount = total / 1.05;
+                    vat = total - amount;
+                }
+
+                amount = amount.toFixed(2);
+                vat = vat.toFixed(2);
+
+                const newRowData = [
+                    $('#editType').val(),
+                    $('#editAcc').val(),
+                    $('#editNC').val(),
+                    $('#editNum').val(),
+                    formattedDate,
+                    $('#editCategory').val(),
+                    $('#editDesc').val(),
+                    amount,
+                    $('#editCode').val(),
+                    vat
+                ];
+
+                if (isCreatingNewRow) {
+                    // Add a new row to the copied table
+                    copiedTable.row.add([...newRowData, null]).draw(false);
+                    isCreatingNewRow = false;
+                } else if (editingRowIndex !== null) {
+                    // Update the row in the copied table
+                    copiedTable.row(editingRowIndex).data([...newRowData, null]).draw(false);
+                } else {
+                    // Add a new row to the copied table
+                    copiedTable.row.add([...newRowData, null]).draw(false);
+                }
+
+                $('#editModal').dialog("close");
+            }
+
+            $('#saveEdit').on('click', function() {
+                saveEditData();
+            });
+
+            $('#exportBtn').on('click', function() {
+                const data = copiedTable.rows().data().toArray();
+                const csv = [];
+                csv.push("Type,Acc,NC,Num,Date,Category,Desc,Amount,Code,VAT"); // Header
+
+                data.forEach(row => {
+                    // Create a clone of the row to avoid modifying the original data
+                    const clonedRow = [...row];
+
+                    // Revert the date format back to dd/mm/yyyy
+                    clonedRow[4] = revertDate(clonedRow[4]);
+
+                    // Join the first 10 elements (exclude actions column)
+                    csv.push(clonedRow.slice(0, 10).join(","));
+                });
+
+                const csvString = csv.join("\n");
+                const blob = new Blob([csvString], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.setAttribute('hidden', '');
+                a.setAttribute('href', url);
+                a.setAttribute('download', 'copied_table_data.csv');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        });
+    </script>
+
+</body>
+</html>
