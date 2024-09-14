@@ -68,6 +68,10 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        #includeHeaders {
+            top: 2em;
+            position: relative;
+        }
     </style>
 </head>
 <body>
@@ -155,6 +159,7 @@
     <button id="createNewRow">Create New Row</button>
     <button id="clearStorageBtn">Clear Table</button>
     <button id="exportBtn">Export to CSV</button>
+    <input type="checkbox" id="includeHeaders">Include headers?<input>
     <table id="copiedTable" class="display" style="width:100%">
         <thead>
             <tr>
@@ -466,7 +471,9 @@
             $('#exportBtn').on('click', function() {
                 const data = copiedTable.rows().data().toArray();
                 const csv = [];
-                //csv.push("Type,Acc,NC,Num,Date,Category,Desc,Amount,Code,VAT"); // Header
+                if ($('#includeHeaders').is(':checked')) {
+                    csv.push("Type,Acc,NC,Num,Date,Category,Desc,Amount,Code,VAT"); // Add header
+                }
 
                 data.forEach(row => {
                     // Create a clone of the row to avoid modifying the original data
