@@ -391,7 +391,8 @@
                     width: 400,
                     closeOnEscape: true,
                     open: function() {
-                        $('#editDay').focus(); // Focus on the Day input
+                        applyLastEnteredDate();
+                        $('#editTotal').focus(); // Focus on Total box
                         $(this).off('keypress').on('keypress', function(e) {
                             if (e.key === "Escape") {
                                 $(this).dialog("close");
@@ -400,6 +401,10 @@
                             if (e.key === "Enter") {
                                 saveEditData();
                                 $(this).dialog("close");
+                            }
+                            if (e.key === '+') {
+                                e.preventDefault();
+                                incrementDay();
                             }
                         });
                     }
@@ -456,6 +461,7 @@
                 }
 
                 $('#editModal').dialog("close");
+                updateLastEnteredDate(); // Save date for reuse
                 updateTotals(); // Update totals after saving
                 saveToStorage(); // Save table data to localStorage
             }
@@ -498,6 +504,33 @@
                 document.body.removeChild(a);
             });
 
+            let lastEnteredDate = { day: '', month: '', year: '' };
+
+            function applyLastEnteredDate() {
+                $('#editDay').val(lastEnteredDate.day);
+                $('#editMonth').val(lastEnteredDate.month);
+                $('#editYear').val(lastEnteredDate.year);
+            }
+
+            function updateLastEnteredDate() {
+                lastEnteredDate.day = $('#editDay').val().padStart(2, '0');
+                lastEnteredDate.month = $('#editMonth').val().padStart(2, '0');
+                lastEnteredDate.year = $('#editYear').val();
+            }
+
+            function incrementDay() {
+                let day = parseInt($('#editDay').val()) || 0;
+                let month = parseInt($('#editMonth').val()) || 1;
+                let year = parseInt($('#editYear').val()) || new Date().getFullYear();
+
+                day++;
+                const date = new Date(year, month - 1, day);
+
+                $('#editDay').val(date.getDate().toString().padStart(2, '0'));
+                $('#editMonth').val((date.getMonth() + 1).toString().padStart(2, '0'));
+                $('#editYear').val(date.getFullYear());
+            }
+                    
             loadFromStorage();
         });
     </script>
