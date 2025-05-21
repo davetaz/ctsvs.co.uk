@@ -406,6 +406,10 @@
                                 e.preventDefault();
                                 incrementDay();
                             }
+                            if (e.key === '-') {
+                                e.preventDefault();
+                                decrementDay();
+                            }
                         });
                     }
                 });
@@ -507,9 +511,11 @@
             let lastEnteredDate = { day: '', month: '', year: '' };
 
             function applyLastEnteredDate() {
-                $('#editDay').val(lastEnteredDate.day);
-                $('#editMonth').val(lastEnteredDate.month);
-                $('#editYear').val(lastEnteredDate.year);
+                if (lastEnteredDate.day != '') {
+                    $('#editDay').val(lastEnteredDate.day);
+                    $('#editMonth').val(lastEnteredDate.month);
+                    $('#editYear').val(lastEnteredDate.year);
+                }
             }
 
             function updateLastEnteredDate() {
@@ -528,6 +534,17 @@
 
                 $('#editDay').val(date.getDate().toString().padStart(2, '0'));
                 $('#editMonth').val((date.getMonth() + 1).toString().padStart(2, '0'));
+                $('#editYear').val(date.getFullYear());
+            }
+
+            function decrementDay() {
+                const day = parseInt($('#editDay').val()) || 1;
+                const month = parseInt($('#editMonth').val()) || 1;
+                const year = parseInt($('#editYear').val()) || new Date().getFullYear();
+
+                const date = new Date(year, month - 1, day - 1);
+                $('#editDay').val(String(date.getDate()).padStart(2, '0'));
+                $('#editMonth').val(String(date.getMonth() + 1).padStart(2, '0'));
                 $('#editYear').val(date.getFullYear());
             }
                     
