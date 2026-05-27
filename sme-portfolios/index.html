@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SME Portfolio Income</title>
+    <link rel="stylesheet" href="css/app.css" />
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>SME Portfolio Income</h1>
+      <p class="subtitle">Portfolio revenue breakdown by month and type</p>
+    </header>
+
+    <main>
+      <section class="card" id="upload-section">
+        <h2>Upload data</h2>
+        <div class="upload-grid">
+          <label class="upload-label">
+            <span class="label-title">Property list (portfolios)</span>
+            <span class="label-hint">Property-List-inc-Teams.csv — PropertyID &amp; Team (portfolio)</span>
+            <input type="file" id="file-portfolios" accept=".csv,text/csv" />
+          </label>
+          <label class="upload-label">
+            <span class="label-title">Revenue breakdown</span>
+            <span class="label-hint">Revenue_breakdown_per_property.csv — dual header rows</span>
+            <input type="file" id="file-revenue" accept=".csv,text/csv" />
+          </label>
+        </div>
+        <div id="upload-status" class="status" aria-live="polite"></div>
+      </section>
+
+      <div id="dashboard" class="hidden">
+        <section class="card">
+          <h2>Summary by portfolio</h2>
+          <div class="filters">
+            <label>
+              Month
+              <select id="filter-month"></select>
+            </label>
+            <label>
+              Portfolio
+              <select id="filter-portfolio"></select>
+            </label>
+          </div>
+          <div class="table-wrap">
+            <table id="summary-table" class="data-table">
+              <thead id="summary-thead"></thead>
+              <tbody id="summary-tbody"></tbody>
+            </table>
+          </div>
+          <p class="hint">Click an amount to see contributing properties.</p>
+        </section>
+
+        <section class="card hidden" id="drill-panel">
+          <div class="drill-header">
+            <h2 id="drill-title">Properties</h2>
+            <button type="button" id="drill-close" class="btn-secondary">Close</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead id="drill-thead"></thead>
+              <tbody id="drill-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Compare months</h2>
+          <div class="filters">
+            <label>
+              Month A
+              <select id="compare-month-a"></select>
+            </label>
+            <label>
+              Month B
+              <select id="compare-month-b"></select>
+            </label>
+            <label>
+              Portfolio
+              <select id="compare-portfolio"></select>
+            </label>
+          </div>
+          <div class="table-wrap table-wrap--tall">
+            <table id="compare-table" class="data-table">
+              <thead id="compare-thead"></thead>
+              <tbody id="compare-tbody"></tbody>
+            </table>
+          </div>
+          <p class="hint">Click a row to drill down to properties for both months.</p>
+        </section>
+
+        <section class="card">
+          <h2>Export</h2>
+          <div class="filters export-row">
+            <label>
+              Month
+              <select id="export-month"></select>
+            </label>
+            <button type="button" id="btn-export" class="btn-primary">Export month CSV</button>
+          </div>
+          <p class="hint">
+            Exports all portfolios: properties with at least one non-zero revenue type for the selected month.
+            No total rows.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

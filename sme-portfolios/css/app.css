@@ -1,0 +1,300 @@
+:root {
+  --bg: #f4f6f8;
+  --card: #fff;
+  --text: #1a2332;
+  --muted: #5c6b7a;
+  --border: #d8dee6;
+  --accent: #1e5a8a;
+  --accent-hover: #164870;
+  --success: #1a6b3c;
+  --warn: #8a5a00;
+  --error: #a32020;
+  --positive: #1a6b3c;
+  --negative: #a32020;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.page-header {
+  background: var(--accent);
+  color: #fff;
+  padding: 1.5rem 1.25rem;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  opacity: 0.9;
+  font-size: 0.95rem;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.upload-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.upload-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 2px dashed var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.upload-label:hover {
+  border-color: var(--accent);
+  background: #f8fafc;
+}
+
+.label-title {
+  font-weight: 600;
+}
+
+.label-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.upload-label input[type='file'] {
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.status {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.status ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.status .success {
+  color: var(--success);
+  font-weight: 500;
+}
+
+.status .warn {
+  color: var(--warn);
+  margin: 0.5rem 0 0;
+}
+
+.status .error {
+  color: var(--error);
+  font-weight: 500;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: flex-end;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.filters select {
+  min-width: 160px;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--text);
+}
+
+.export-row {
+  align-items: flex-end;
+}
+
+.hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.table-wrap--tall {
+  max-height: 520px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.5rem 0.65rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  background: #eef2f6;
+  z-index: 1;
+  font-weight: 600;
+}
+
+.data-table tbody th[scope='row'] {
+  font-weight: 500;
+  background: #fafbfc;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.data-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table .clickable {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.data-table .clickable:hover {
+  text-decoration: underline;
+  background: #f0f7fc;
+}
+
+.data-table tr.clickable {
+  cursor: pointer;
+}
+
+.data-table tr.clickable:hover td {
+  background: #f0f7fc;
+}
+
+.data-table .row-total th,
+.data-table .row-total td {
+  font-weight: 600;
+  background: #f0f4f8;
+  border-top: 2px solid var(--border);
+}
+
+.data-table .total {
+  font-weight: 600;
+}
+
+.positive {
+  color: var(--positive);
+}
+
+.negative {
+  color: var(--negative);
+}
+
+.drill-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.drill-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-secondary {
+  background: #fff;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn-secondary:hover {
+  background: #f4f6f8;
+}
+
+#drill-panel .data-table td:nth-child(2) {
+  white-space: normal;
+  min-width: 200px;
+}
